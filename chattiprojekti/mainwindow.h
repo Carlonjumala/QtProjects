@@ -16,7 +16,8 @@ class ChatWindow : public QMainWindow
 public:
     ChatWindow(QWidget *parent = nullptr);
     ~ChatWindow();
-    void disconnectFromServer(); // Added declaration
+    void disconnectFromServer();
+    void closeEvent(QCloseEvent *event);
     void sendMessage();
 
 public slots:
@@ -26,6 +27,7 @@ public slots:
 
 private slots:
     void receiveMessage();
+    void joinServer();
 
 
 

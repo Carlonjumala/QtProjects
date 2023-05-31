@@ -2,7 +2,11 @@
 #include "mainwindow.h"
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QInputDialog>
+#include <QMessageBox>
 #include <QApplication>
+#include <QMessageBox>
+#include <QCloseEvent>
 
 ChatWindow::ChatWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -25,8 +29,11 @@ ChatWindow::ChatWindow(QWidget *parent)
 
     // Luodaan toolbar
     QToolBar *toolbar = new QToolBar(this);
-    QAction *action1 = toolbar->addAction("Tool 1");
+    QAction *joinAction = toolbar->addAction("Join Server");
     QAction *action2 = toolbar->addAction("Tool 2");
+
+    // Liitytään servulle
+    connect(joinAction, &QAction::triggered, this, &ChatWindow::joinServer);
 
     // Lisätään toolbaari ikkunaan
     addToolBar(toolbar);
@@ -34,8 +41,32 @@ ChatWindow::ChatWindow(QWidget *parent)
     setCentralWidget(centralWidget);
 
     // Liitytään servulle
-    socket.connectToHost("localhost", 12345);
     connect(&socket, &QTcpSocket::readyRead, this, [this]() { receiveMessage(); });
+}
+
+void ChatWindow::closeEvent(QCloseEvent *event)
+{
+    QMessageBox::StandardButton result = QMessageBox::question(this, "Confirmation", "Are you sure you want to close the chat?", QMessageBox::Yes | QMessageBox::No);
+    if (result == QMessageBox::Yes) {
+        event->accept();  // Accept the close event and close the window
+    } else {
+        event->ignore();  // Ignore the close event and keep the window open
+    }
+}
+
+void ChatWindow::joinServer()
+{
+    bool ok;
+    QString ipAddress = QInputDialog::getText(this, "Join Server", "Enter server IP address:", QLineEdit::Normal, "localhost", &ok);
+    if (ok && !ipAddress.isEmpty())
+    {
+        socket.connectToHost(ipAddress, 12345);
+        if (socket.waitForConnected()) {
+            chatDisplay->append("Connected to the server.");
+        } else {
+            chatDisplay->append("Error: Failed to connect to the server.");
+        }
+    }
 }
 
 void ChatWindow::receiveMessage(QString message)
